@@ -1,0 +1,70 @@
+import clr
+#import ProtoGeometry
+clr.AddReference('ProtoGeometry')
+from Autodesk.DesignScript.Geometry import *
+#import Revit API
+clr.AddReference("RevitAPI")
+import Autodesk
+from Autodesk.Revit.DB import *
+# import RevitServices
+clr.AddReference("RevitServices")
+import RevitServices 
+from RevitServices.Persistence import DocumentManager
+from RevitServices.Transactions import TransactionManager
+# import RevitNodes
+clr.AddReference("RevitNodes")
+import Revit
+clr.ImportExtensions(Revit.Elements)
+clr.ImportExtensions(Revit.GeometryConversion)
+
+ductElements = UnwrapElement(IN[0])
+taggedDuctElements = UnwrapElement(IN[1])
+
+untaggedDuctElements = []
+lengthFail = []
+offsetFail = []
+widthFail = []
+alreadyTaggedFail = []
+startOffsetValue = []
+endOffsetValue = []
+
+for duct in ductElements:
+	tagCount = 0
+	#If duct is too short (less than 3.0') then it will not be tagged
+	parameterLength = duct.LookupParameter("Length")
+	if parameterLength.AsDouble() < 3.0:
+		tagCount += 1
+		lengthFail.append(duct)
+	
+	#If duct is a riser (offsets are significantly different), then it will not be tagged	
+	parameterStartOffset = duct.LookupParameter("Start Offset")
+	parameterEndOffset = duct.LookupParameter("End Offset")
+	offsetDifference = abs(parameterStartOffset.AsDouble() - parameterEndOffset.AsDouble())
+	if parameterStartOffset.AsDouble() != parameterEndOffset.AsDouble() and offsetDifference > 0.01:
+		tagCount += 1
+		offsetFail.append(duct)
+		startOffsetValue.append(parameterStartOffset.AsDouble())
+		endOffsetValue.append(parameterEndOffset.AsDouble())
+	#Get dimensions of duct. If duct is too small (less than 10" wide)
+	#then it will not be tagged
+	try:
+		parameterDiameter = duct.LookupParameter("Diameter")
+		if parameterDiameter.AsDouble() < (10.0/12.0):
+			tagCount += 1
+			widthFail.append(duct)
+			
+	except:
+		parameterWidth = duct.LookupParameter("Width")
+		if parameterWidth.AsDouble() < (10.0/12.0):
+			tagCount += 1
+			widthFail.append(duct)
+	#For each duct element in model, compare to list of ducts that are
+	#already tagged
+	for taggedDuct in taggedDuctElements:
+		if duct.Id == taggedDuct.Id:
+			tagCount += 1
+			alreadyTaggedFail.append(duct)
+	if tagCount == 0:
+		untaggedDuctElements.append(duct)
+
+OUT = untaggedDuctElements, lengthFail, offsetFail, widthFail, alreadyTaggedFail, startOffsetValue, endOffsetValue

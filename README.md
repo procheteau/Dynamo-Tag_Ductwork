@@ -1,7 +1,5 @@
 # Dynamo-Tag_Ductwork
 
-# Dynamo-Tag_Ductwork
-
 <img src="images/graph.png" width="500" >
 
 By applying Dynamo and Python scripts, I was able to automate the tagging of in a 3D Autodesk Revit building model.
