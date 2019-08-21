@@ -12,4 +12,4 @@ appropriate.
 <br>
 
 *Untagged and sufficiently large ductwork elements are identified and tagged*
-<img src="after-tag.png" width="400" >
+<img src="images/after-tag.png" width="400" >
